@@ -51,7 +51,7 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public ProductEntity updateProduct(Long id, Product product) {
         ProductEntity existingProduct = repository.findById(id)
-                .orElseThrow(()-> new EntityNotFoundException("Product not found with id"+id));
+                .orElseThrow(()-> new EntityNotFoundException("Product not found with id "+id));
         mapper.map(product,existingProduct);
 
         return repository.save(existingProduct);
