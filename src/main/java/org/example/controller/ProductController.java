@@ -26,14 +26,17 @@ public class ProductController {
     public List<ProductEntity> viewAllProduct(){
         return productService.viewAll();
     }
+
     @GetMapping("/{id}")
     public Product viewProductById(@PathVariable Long id){
         return productService.viewProductById(id);
     }
+
     @DeleteMapping("/delete/{id}")
     public void deleteById(@PathVariable Long id){
         productService.deleteById(id);
     }
+
     @PutMapping("/update/{id}")
     public ProductEntity updateProduct(@PathVariable Long id,@RequestBody Product product){
         return productService.updateProduct(id,product);
