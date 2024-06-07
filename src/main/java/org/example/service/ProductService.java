@@ -10,12 +10,13 @@ public interface ProductService {
 
     Product viewProductById(Long id);
 
-    void createProduct(Product product);
+    ProductEntity createProduct(Product product, double cat_id);
 
-    List<ProductEntity> viewAll();
+    List<Product> viewAll();
 
     void deleteById(Long id);
 
 
     ProductEntity updateProduct(Long id, Product product);
+
 }

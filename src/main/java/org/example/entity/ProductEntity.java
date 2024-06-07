@@ -19,4 +19,9 @@ public class ProductEntity {
     private boolean live;
     private String product_imageName;
     private String product_desc;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id")
+    private CategoryEntity category;
+
 }

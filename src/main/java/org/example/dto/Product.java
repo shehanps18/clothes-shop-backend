@@ -22,4 +22,5 @@ public class Product {
     private boolean live;
     private String product_imageName;
     private String product_desc;
+    private Category category;
 }

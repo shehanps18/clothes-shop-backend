@@ -16,14 +16,15 @@ public class ProductController {
 
     final ProductService productService;
 
-    @PostMapping("/create")
+    @PostMapping("/create/{cat_id}")
     @ResponseStatus(HttpStatus.CREATED)
-    public void createProduct(@RequestBody Product product) {
-        productService.createProduct(product);
+    public void createProduct(@RequestBody Product product,@PathVariable double cat_id) {
+        productService.createProduct(product,cat_id);
 
     }
     @GetMapping("/view-all-product")
-    public List<ProductEntity> viewAllProduct(){
+    public List<Product> viewAllProduct(){
+
         return productService.viewAll();
     }
 
