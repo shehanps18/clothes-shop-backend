@@ -5,12 +5,16 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.dto.Category;
 import org.example.dto.Product;
+import org.example.dto.ProductResponse;
 import org.example.entity.CategoryEntity;
 import org.example.entity.ProductEntity;
 import org.example.repository.CategoryRepository;
 import org.example.repository.ProductRepository;
 import org.example.service.ProductService;
 import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
@@ -50,34 +55,43 @@ public  class ProductServiceImpl implements ProductService {
 
     @Override
     public void createProduct(Product product, double cat_id) {
-        ProductEntity entity = mapper.map(product,ProductEntity.class);
+        ProductEntity entity = mapper.map(product, ProductEntity.class);
         Optional<CategoryEntity> categoryEntityOptional = categoryRepository.findById((long) cat_id);
-        if(categoryEntityOptional.isPresent()){
+        if (categoryEntityOptional.isPresent()) {
             entity.setCategory(categoryEntityOptional.get());
-        }else {
-            throw new RuntimeException("category not found with id"+ cat_id);
+        } else {
+            throw new RuntimeException("category not found with id" + cat_id);
         }
         repository.save(entity);
     }
 
 
-
     @Override
     @Transactional(readOnly = true)
-    public List<Product> viewAll(int pageNumber, String sortBy, String sortDir) {
-        Sort sort =null;
-        if(sortDir.trim().equalsIgnoreCase("asc")){
-            sort = Sort.by(sortBy).ascending();
-            System.out.print(sort);
-        }else {
-            sort = Sort.by(sortBy).descending();
-            System.out.print(sort);
-        }
-        List<ProductEntity> productEntities = repository.findAll();
-        return productEntities.stream()
+    public ProductResponse viewAll(int pageNumber,int pageSize, String sortBy, String sortDir) {
+        Sort sort = sortDir.trim().equalsIgnoreCase("asc")?
+                Sort.by(sortBy).ascending():
+                Sort.by(sortBy).descending();
+
+        PageRequest pageable = PageRequest.of(pageNumber, pageSize, sort);
+        Page<ProductEntity> page = repository.findAll(pageable);
+
+        List<Product> products = page.getContent().stream()
+                .filter(ProductEntity::isLive)
                 .map(this::mapProductEntityToDto)
                 .collect(Collectors.toList());
+
+        ProductResponse response = new ProductResponse();
+        response.setContent(products);
+        response.setPageNumber(page.getNumber());
+        response.setPageSize(page.getSize());
+        response.setTotalPages(page.getTotalPages());
+        response.setLastPage(page.isLast());
+
+        return response;
     }
+
+
 
     private Product mapProductEntityToDto(ProductEntity productEntity) {
         Product product = mapper.map(productEntity, Product.class);
@@ -95,9 +109,9 @@ public  class ProductServiceImpl implements ProductService {
     @Override
     public ProductEntity updateProduct(Long id, Product product) {
         ProductEntity existingProduct = repository.findById(id)
-                .orElseThrow(()-> new EntityNotFoundException("Product not found with id "+id));
-        mapper.map(product,existingProduct);
-        if(product.getCategory()!=null){
+                .orElseThrow(() -> new EntityNotFoundException("Product not found with id " + id));
+        mapper.map(product, existingProduct);
+        if (product.getCategory() != null) {
             existingProduct.setCategory(mapper.map(product.getCategory(), CategoryEntity.class));
         }
         ProductEntity updateProduct = repository.save(existingProduct);
@@ -105,7 +119,19 @@ public  class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public List<Product> viewAll() {
-        return List.of();
+    public List<Product> findProductByCategoryId(Long categoryId) {
+        List<ProductEntity> productEntities = repository.findByCategoryCategoryId(categoryId);
+
+        return productEntities.stream()
+                .map(this::mapProductEntityToDto)
+                .collect(Collectors.toList());
     }
-}
+
+//    @Override
+//    public List<Product> viewAll() {
+//        List<ProductEntity> productEntities = repository.findAll();
+//        return productEntities.stream()
+//                .map(this::mapProductEntityToDto)
+//                .collect(Collectors.toList());
+//    }
+    }

@@ -1,9 +1,9 @@
 package org.example.controller;
 
-import jakarta.validation.constraints.AssertFalse;
 import lombok.RequiredArgsConstructor;
 import org.example.dto.AppConstants;
 import org.example.dto.Product;
+import org.example.dto.ProductResponse;
 import org.example.entity.ProductEntity;
 import org.example.service.ProductService;
 import org.springframework.http.HttpStatus;
@@ -25,9 +25,13 @@ public class ProductController {
 
     }
     @GetMapping("/view-all-product")
-    public List<Product> viewAllProduct(){
+    public ProductResponse viewAllProduct(
+            @RequestParam(value = "pageNumber", defaultValue = "0", required = false) int pageNumber,
+            @RequestParam(value = "pageSize", defaultValue = "2", required = false) int pageSize,
+            @RequestParam(value = "sortBy", defaultValue = "productid", required = false) String sortBy,
+            @RequestParam(value = "sortDir", defaultValue = "asc", required = false) String sortDir) {
 
-        return productService.viewAll();
+        return productService.viewAll(pageNumber,pageSize, sortBy, sortDir);
     }
 
     @GetMapping("/{id}")
@@ -50,5 +54,10 @@ public class ProductController {
     @PutMapping("/update/{id}")
     public ProductEntity updateProduct(@PathVariable Long id,@RequestBody Product product){
         return productService.updateProduct(id,product);
+    }
+    @GetMapping("/catBy-Id/{categoryId}")
+    public List<Product> getProductByCategoryId(@PathVariable Long categoryId){
+        return productService.findProductByCategoryId(categoryId);
+
     }
 }
