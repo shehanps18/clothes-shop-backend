@@ -3,5 +3,8 @@ package org.example.repository;
 import org.example.entity.UserEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface UserRepository extends JpaRepository<UserEntity,Integer> {
+import java.util.Optional;
+
+public interface UserRepository extends JpaRepository<UserEntity,Long> {
+    Optional<UserEntity> findByemail(String email);
 }

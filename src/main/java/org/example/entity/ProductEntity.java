@@ -7,6 +7,7 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
+@Table(name = "Product")
 
 public class ProductEntity {
     @Id
@@ -20,8 +21,14 @@ public class ProductEntity {
     private String product_imageName;
     private String product_desc;
 
+    @Setter
+    @Getter
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id")
     private CategoryEntity category;
+
+    @OneToOne
+    private CartItemEntity cartItem;
+
 
 }

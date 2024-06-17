@@ -7,6 +7,7 @@ import jakarta.persistence.Id;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.example.entity.CartItemEntity;
 
 @Data
 @AllArgsConstructor
@@ -23,4 +24,5 @@ public class Product {
     private String product_imageName;
     private String product_desc;
     private Category category;
+    private CartItem cartItem;
 }
