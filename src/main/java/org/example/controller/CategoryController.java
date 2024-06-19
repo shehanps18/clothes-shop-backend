@@ -17,7 +17,7 @@ public class CategoryController {
 
     final CategoryService categoryService;
 
-    @PostMapping("/create-cat")
+    @PostMapping("/create")
     @ResponseStatus(HttpStatus.CREATED)
     public void createCategory(@RequestBody Category category){
         categoryService.createCategory(category);

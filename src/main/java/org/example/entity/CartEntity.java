@@ -17,7 +17,7 @@ public class CartEntity {
     @Id
     private int cartId;
 
-    @OneToMany
+    @OneToMany(mappedBy = "cart",cascade = CascadeType.ALL)
     private Set<CartItemEntity> items = new HashSet<>();
 
     @OneToOne

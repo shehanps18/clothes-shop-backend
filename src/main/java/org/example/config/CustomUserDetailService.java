@@ -16,7 +16,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-public class CustomUserDetailService implements UserDetailsService {
+public class CustomUserDetailService implements UserDetailsService{
 
     final UserRepository repository;
 
@@ -24,6 +24,6 @@ public class CustomUserDetailService implements UserDetailsService {
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         UserEntity user = this.repository.findByemail(email)
                 .orElseThrow(()->new OpenApiResourceNotFoundException("User Not Found"));
-        return user;
+        return  user;
     }
 }

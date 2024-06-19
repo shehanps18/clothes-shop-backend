@@ -52,14 +52,14 @@ public class CartServiceImpl implements CartService {
 //        getting cart from user
         CartEntity cart = user.getCart();
         if(cart==null){
-            CartEntity cart1 = new CartEntity();
+             cart = new CartEntity();
         }
         cartItem.setCart(cart);
         Set<CartItemEntity> items = cart.getItems();
 //        checking item is available in cartItem
 //        if cart item available increase qty else
 //        add new product in cartitem
-        AtomicReference<Boolean> flag = new AtomicReference<>();
+        AtomicReference<Boolean> flag = new AtomicReference<>(false);
         Set<CartItemEntity> newProduct = items.stream().map((i) -> {
             if (i.getProduct().getId() == productEntity.getId()) {
                 i.setQuantity(quantity);
