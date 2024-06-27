@@ -1,44 +1,51 @@
 package org.example.config;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.AllArgsConstructor;
+import org.example.Security.JwtAuthenticationFilter;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
-import org.springframework.security.config.annotation.authentication.configurers.userdetails.DaoAuthenticationConfigurer;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
-import org.springframework.security.config.annotation.web.configurers.HttpBasicConfigurer;
-import org.springframework.security.config.ldap.EmbeddedLdapServerContextSourceFactoryBean;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
+import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
-
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.stereotype.Service;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 
 @Configuration
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(prePostEnabled = true)
-
+@Service
+@AllArgsConstructor
 public class SecurityConfig   {
-    @Autowired
-    private CustomUserDetailService customUserDetailService;
-//    public static String[] PUBLIC_URL=();
 
+    private final CustomUserDetailService customUserDetailService;
+    private final JwtAuthenticationFilter filter;
+    private final AuthenticationEntryPoint entryPoint;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http)throws Exception{
-        http.authorizeHttpRequests(
-                authorize-> authorize.requestMatchers("/user/all","/user/").permitAll()
-                        .anyRequest().authenticated());
-        http.authenticationProvider(daoAuthenticationProvider());
+        http
+                .csrf(AbstractHttpConfigurer::disable)
+                .securityMatcher("/**")
+                .authorizeHttpRequests(
+                authorize-> authorize.requestMatchers("/user/**").permitAll()
+                        .requestMatchers("/user/create").permitAll()
+                        .anyRequest().authenticated())
+                .exceptionHandling(ex->ex.authenticationEntryPoint(entryPoint))
+                .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+        http.addFilterBefore(filter, UsernamePasswordAuthenticationFilter.class);
+
 
         return http.build();
 
@@ -50,19 +57,31 @@ public class SecurityConfig   {
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
-//    @Bean
-//    public InMemoryUserDetailsManager userDetailsService() {
-//        UserDetails user = User.withDefaultPasswordEncoder()
-//                .username("user")
-//                .password("password")
-//                .roles("USER")
-//                .build();
-//        return new InMemoryUserDetailsManager(user);
-//    }
-
+    @Bean
+    public FilterRegistrationBean<org.springframework.web.filter.CorsFilter> cosFilter(){
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowCredentials(true);
+        configuration.addAllowedOriginPattern("*");
+        configuration.addAllowedHeader("Authorization");
+        configuration.addAllowedHeader("Context-Type");
+        configuration.addAllowedHeader("Accept");
+        configuration.addAllowedMethod("POST");
+        configuration.addAllowedMethod("GET");
+        configuration.addAllowedMethod("PUT");
+        configuration.addAllowedMethod("DELETE");
+        configuration.addAllowedHeader("OPTIONS");
+        configuration.setMaxAge(3600L);
+        source.registerCorsConfiguration("/**",configuration);
+        FilterRegistrationBean<org.springframework.web.filter.CorsFilter> bean = new FilterRegistrationBean
+                <>(new org.springframework.web.filter.CorsFilter(source));
+        bean.setOrder(-110);
+        return bean;
+    }
 
     @Bean
-    public AuthenticationManager authenticationManagerBean(AuthenticationConfiguration configuration) throws Exception {
+    public AuthenticationManager authenticationManagerBean
+            (AuthenticationConfiguration configuration) throws Exception {
         return configuration.getAuthenticationManager();
 
     }
