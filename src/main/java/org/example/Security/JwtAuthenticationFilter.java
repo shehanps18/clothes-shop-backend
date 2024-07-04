@@ -13,13 +13,9 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
-
 import java.io.IOException;
-import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
@@ -29,7 +25,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     Logger logger = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
+                                    FilterChain filterChain)
             throws ServletException, IOException {
 
 //get token from Header
@@ -42,35 +39,49 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             jwtToken = requestToken.substring(7);
             try {
                 Username = this.jwtHelper.getUsername(jwtToken);
-
+                logger.info("JWT Token parsed successfully. Username: {}", Username);
 
             } catch (ExpiredJwtException e) {
-                logger.info("Invalid token message ", "Jwt token expired");
+                logger.error("JWT token expired", e);
+                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "JWT token expired");
+                return;
             } catch (MalformedJwtException e) {
-                logger.info("Invalid token message ", "Invalid Jwt token ");
+                logger.error("Invalid JWT token", e);
+                response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid JWT token");
+                return;
             } catch (IllegalArgumentException e) {
-                logger.info("Invalid token message ", "Unable to get token");
+                logger.error("Unable to get JWT token", e);
+                response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unable to get JWT token");
+                return;
             }
+        }else {
+            logger.warn("JWT token does not start with Bearer");
+        }
             if (Username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
 //                validate
                 UserDetails userDetails = this.userDetailsService.loadUserByUsername(Username);
+                logger.info("UserDetails loaded for username: {}", Username);
                 if (this.jwtHelper.validateToken(jwtToken, userDetails)) {
-                    UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(userDetails,
-                            null, userDetails.getAuthorities());
+                    UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
+                            userDetails, null, userDetails.getAuthorities());
                     SecurityContextHolder.getContext().setAuthentication(auth);
+                    logger.info("Authentication set in SecurityContext for username: {}", Username);
                 } else {
-                    logger.info("not validate Message  ", "Invalid Jwt token e");
+                    logger.error("Invalid JWT token");
+                    response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid JWT token");
+                    return;
                 }
-            } else {
-                logger.info("User Message", "username is null or auth is already there ");
-            }
+//                    logger.error("not validate Message  ", "Invalid Jwt token e");
+//                }
+//            } else {
+//
+//                logger.info("User Message", "username is null or auth is already there ");
+//            }
 
-        } else {
-            logger.info("Token message { }", "Token does not start with bearer");
+//        } else {
+//            logger.info("Token message { }", "Token does not start with bearer");
         }
         filterChain.doFilter(request, response);
     }
-
-
 
 }

@@ -12,7 +12,7 @@ import java.util.List;
 @NoArgsConstructor
 @Entity
 
-public class CategoryEntity {
+public class  CategoryEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long categoryId;

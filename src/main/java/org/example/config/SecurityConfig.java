@@ -1,6 +1,7 @@
 package org.example.config;
 import lombok.AllArgsConstructor;
 import org.example.Security.JwtAuthenticationFilter;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -25,11 +26,11 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @Configuration
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(prePostEnabled = true)
-@Service
 @AllArgsConstructor
 public class SecurityConfig   {
 
     private final CustomUserDetailService customUserDetailService;
+    public static String[] PUBLIC_URL={"/auth/login", "/cart/add", "/user/create", "/product/view-all-product"};
     private final JwtAuthenticationFilter filter;
     private final AuthenticationEntryPoint entryPoint;
 
@@ -39,8 +40,8 @@ public class SecurityConfig   {
                 .csrf(AbstractHttpConfigurer::disable)
                 .securityMatcher("/**")
                 .authorizeHttpRequests(
-                authorize-> authorize.requestMatchers("/user/**").permitAll()
-                        .requestMatchers("/user/create").permitAll()
+                authorize-> authorize
+                        .requestMatchers(PUBLIC_URL).permitAll()
                         .anyRequest().authenticated())
                 .exceptionHandling(ex->ex.authenticationEntryPoint(entryPoint))
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS));

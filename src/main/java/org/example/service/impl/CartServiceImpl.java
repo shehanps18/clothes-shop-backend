@@ -13,12 +13,13 @@ import org.example.repository.ProductRepository;
 import org.example.repository.UserRepository;
 import org.example.service.CartService;
 import org.modelmapper.ModelMapper;
+import org.springdoc.api.OpenApiResourceNotFoundException;
 import org.springframework.stereotype.Service;
-
-import java.security.Principal;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
+
 
 @Service
 @RequiredArgsConstructor
@@ -27,11 +28,13 @@ public class CartServiceImpl implements CartService {
     final ProductRepository productRepository;
     final CartRepository cartRepository;
     final ModelMapper mapper;
+    private final ModelMapper modelMapper;
 
     @Override
     public Cart addItem(ItemRequest itemRequest, String Username) {
         int productId = itemRequest.getProductId();
         int quantity = itemRequest.getQuantity();
+
 //        fetch User
         UserEntity user = this.userRepository.findByemail(Username)
                 .orElseThrow(() -> new UserNotFoundException("User name not found"));
@@ -51,23 +54,31 @@ public class CartServiceImpl implements CartService {
 
 //        getting cart from user
         CartEntity cart = user.getCart();
-        if(cart==null){
+        if (cart == null) {
+            cart = new CartEntity();
+            cart.setUser(user); // Ensure the Cart is associated with the User
+            user.setCart(cart); // Ensure the User is associated with the Cart
+        }
+
+        cartItem.setCart(cart); // Set the Cart in CartItem
+        Set<CartItemEntity> items = cart.getItems();
+        /*if(cart==null){
              cart = new CartEntity();
         }
         cartItem.setCart(cart);
-        Set<CartItemEntity> items = cart.getItems();
+        Set<CartItemEntity> items = cart.getItems();*/
+
 //        checking item is available in cartItem
 //        if cart item available increase qty else
 //        add new product in cartitem
         AtomicReference<Boolean> flag = new AtomicReference<>(false);
-        Set<CartItemEntity> newProduct = items.stream().map((i) -> {
-            if (i.getProduct().getId() == productEntity.getId()) {
+        Set<CartItemEntity> newProduct = items.stream().peek((i) -> {
+            if (Objects.equals(i.getProduct().getId(), productEntity.getId())) {
                 i.setQuantity(quantity);
                 i.setTotalPrice(totalePrice);
                 flag.set(true);
 
             }
-            return i;
         }).collect(Collectors.toSet());
 
         if(flag.get()){
@@ -78,7 +89,19 @@ public class CartServiceImpl implements CartService {
             cartItem.setCart(cart);
             items.add(cartItem);
         }
+        cart.setItems(items);
         CartEntity cart1 = this.cartRepository.save(cart);
         return this.mapper.map(cart1,Cart.class);
+    }
+//    create methode for getting cart
+
+    public Cart getCartAll(String email){
+//        find user
+        UserEntity user = this.userRepository.findByemail(email).orElseThrow(
+                () -> new OpenApiResourceNotFoundException("User not found"));
+//        find cart
+        CartEntity cart = this.cartRepository.findByUser(user).orElseThrow(
+                () -> new OpenApiResourceNotFoundException("cart not found"));
+        return this.modelMapper.map(cart,Cart.class);
     }
 }

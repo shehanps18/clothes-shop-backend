@@ -6,13 +6,14 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.example.entity.CartItemEntity;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-
+@EqualsAndHashCode(of = "id")
 public class Product {
 
     private Long id;
